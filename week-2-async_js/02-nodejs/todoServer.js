@@ -45,9 +45,7 @@ const fs = require("fs");
 const { v4: uuidv4 } = require("uuid");
 
 const app = express();
-app.use(express.urlencoded({ extended: true }));
 app.use(bodyParser.json());
-app.use(express.json());
 
 //  GET all the todos
 app.get("/todos", (req, res) => {
@@ -55,7 +53,7 @@ app.get("/todos", (req, res) => {
     const fileData = JSON.parse(data);
     if (err)
       return res.status(500).send({ message: "Something went wrong", err });
-    res.send(fileData);
+    res.json(fileData);
   });
 });
 
@@ -66,24 +64,24 @@ app.get("/todos/:id", (req, res) => {
       return res.status(500).send({ message: "Something went wrong", err });
     const fileData = JSON.parse(data);
     const singleTodo = fileData.find((value) => value.id === req.params.id);
-    if (singleTodo) res.send({ data: singleTodo });
+    if (singleTodo) res.json(singleTodo);
     else res.status(404).send({ message: "No todo found" });
   });
 });
 
 //  Add a new todo
 app.post("/todos", (req, res) => {
-  fs.readFile("./todos.json", "utf-8", (err, data) => {
+  fs.readFile("todos.json", "utf-8", (err, data) => {
     const fileData = JSON.parse(data);
     if (err)
       return res.status(500).send({ message: "Something went wrong", err });
     const newTodo = req.body;
     newTodo.id = uuidv4();
-    fileData.push(req.body);
+    fileData.push(newTodo);
     fs.writeFile("./todos.json", JSON.stringify(fileData), (err) => {
       if (err)
         return res.status(500).send({ message: "Something went wrong", err });
-      res.send({ data: fileData });
+      res.status(201).json(newTodo);
     });
   });
 });
@@ -104,14 +102,15 @@ app.put("/todos/:id", (req, res) => {
       if (t.id === req.params.id) return todo;
       return t;
     });
-    fs.writeFile("todo.json", JSON.stringify(newTodos), (err) => {
+    fs.writeFile("todos.json", JSON.stringify(newTodos), (err) => {
       if (err)
         return res.status(500).send({ message: "Something went wrong", err });
-      res.send({ data: newTodos });
+      res.status(200).json(todo);
     });
   });
 });
 
+//  Delete a todo with :id
 app.delete("/todos/:id", (req, res) => {
   fs.readFile("todos.json", "utf-8", (err, data) => {
     if (err) res.status(500).send({ message: "Something went wrong", err });
@@ -122,15 +121,15 @@ app.delete("/todos/:id", (req, res) => {
     fs.writeFile("todos.json", JSON.stringify(todos), (err) => {
       if (err)
         return res.status(500).send({ message: "Something went wrong", err });
-      res.send({ data: todos });
+      res.status(200).send();
     });
   });
 });
 
-const PORT = 3000;
+// const PORT = 3000;
 
-app.listen(PORT, () => {
-  console.log("listening to port " + PORT);
-});
+// app.listen(PORT, () => {
+//   console.log("listening to port " + PORT);
+// });
 
 module.exports = app;
