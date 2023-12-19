@@ -5,13 +5,8 @@
  */
 
 function sleep(milliseconds) {
-  let i = 0;
-  while (i <= milliseconds * 10) {
-    i++;
-    console.log(i);
-  }
-  return new Promise((res, rej) => {
-    return res();
+  return new Promise((resolve) => {
+    setTimeout(resolve, milliseconds);
   });
 }
 
