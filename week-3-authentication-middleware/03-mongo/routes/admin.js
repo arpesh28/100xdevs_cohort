@@ -1,10 +1,25 @@
 const { Router } = require("express");
 const router = Router();
-const adminMiddleware = require("../middleware/admin");
+const { adminMiddleware, validateAdminSignUp } = require("../middleware/admin");
+const { Admin } = require("../db/index");
 
 // Admin Routes
 router.post("/signup", (req, res) => {
-  // Implement admin signup logic
+  const { username, password } = req.body;
+
+  //  Validation
+  const errors = validateAdminSignUp({ username, password });
+  if (errors) return res.status(400).json(errors);
+
+  //  Create admin structure
+  const admin = new Admin({
+    username,
+    password,
+  });
+
+  //  Save to DB
+  admin.save();
+  res.json(admin);
 });
 
 router.post("/courses", adminMiddleware, (req, res) => {
