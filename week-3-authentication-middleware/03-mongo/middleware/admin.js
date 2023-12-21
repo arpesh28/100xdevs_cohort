@@ -1,25 +1,20 @@
-const zod = require("zod");
-
-const getErrors = (errors) => {
-  return errors?.map((err) => ({
-    [err.path[0]]: err.message,
-  }));
-};
+const { Admin, validateUser } = require("../db/index");
 
 // Middleware for handling auth
-function adminMiddleware(req, res, next) {
-  // Implement admin auth logic
-  // You need to check the headers and validate the admin from the admin DB. Check readme for the exact headers to be expected
-}
+const adminMiddleware = async (req, res, next) => {
+  const { username, password } = req.headers;
 
-const validateAdminSignUp = (adminData) => {
-  const schema = zod.object({
-    username: zod.string(),
-    password: zod.string(),
-  });
-  const validate = schema.safeParse(adminData);
-  if (validate.success) return false;
-  return getErrors(validate?.error?.errors);
+  //  Validation
+  const errors = validateUser({ username, password });
+  if (errors) return res.status(400).json(errors);
+
+  //  Check for Admin
+  const admin = await Admin.findOne({ username, password });
+
+  if (!admin) return res.status(403).json({ message: "Invalid Credentials" });
+
+  req.body.admin = admin;
+  next();
 };
 
-module.exports = { adminMiddleware, validateAdminSignUp };
+module.exports = adminMiddleware;
