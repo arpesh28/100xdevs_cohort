@@ -49,7 +49,7 @@ router.post("/courses/:courseId", userMiddleware, async (req, res) => {
 
   //  Find course
   const course = await Course.findById(courseId);
-  if (!course) return res.status(401).json({ message: "Course not found" });
+  if (!course) return res.status(404).json({ message: "Course not found" });
 
   try {
     await User.findByIdAndUpdate(user?._id, {

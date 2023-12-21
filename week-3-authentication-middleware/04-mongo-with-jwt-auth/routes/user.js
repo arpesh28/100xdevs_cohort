@@ -1,24 +1,98 @@
 const { Router } = require("express");
 const router = Router();
 const userMiddleware = require("../middleware/user");
+const { User, validateUser, Course } = require("../db");
+const jwt = require("jsonwebtoken");
+const mongoose = require("mongoose");
 
 // User Routes
-app.post('/signup', (req, res) => {
-    // Implement user signup logic
+router.post("/signup", async (req, res) => {
+  const { username, password } = req.body;
+
+  //  Validate Body
+  const errors = validateUser({ username, password });
+  if (errors) return res.status(400).json(errors);
+
+  //  Check existence
+  const isExist = await User.findOne({ username });
+  if (isExist) return res.status(400).json({ message: "User already exist" });
+
+  //  Create Admin
+  const token = jwt.sign({ username }, process.env.AUTH_SECRET);
+  const newUser = User({
+    username,
+    password,
+  });
+  try {
+    const user = await newUser.save();
+    res.json({ username, token, _id: user._id });
+  } catch (error) {
+    res.status(500).json(error);
+  }
 });
 
-app.post('/signin', (req, res) => {
-    // Implement admin signup logic
+router.post("/signin", async (req, res) => {
+  const { username, password } = req.body;
+
+  //  Validate Body
+  const errors = validateUser({ username, password });
+  if (errors) return res.status(400).json(errors);
+
+  //  Check existence
+  const user = await User.findOne({ username });
+  if (!user) return res.status(404).json({ message: "User not found" });
+
+  if (user.password !== password)
+    return res.status(401).json({ message: "Invalid Credentials" });
+
+  //  Login Admin
+  try {
+    const token = jwt.sign({ username }, process.env.AUTH_SECRET);
+    res.json({ username, token, _id: user._id });
+  } catch (error) {
+    console.log(error);
+    res.status(403).json({ message: "Unauthorized" });
+  }
 });
 
-app.get('/courses', (req, res) => {
-    // Implement listing all courses logic
+router.get("/courses", async (req, res) => {
+  try {
+    const courses = await Course.find();
+    res.json(courses);
+  } catch (error) {
+    res.status(500).json({ message: "Something went wrong" });
+  }
 });
 
-app.post('/courses/:courseId', userMiddleware, (req, res) => {
-    // Implement course purchase logic
+router.post("/courses/:courseId", userMiddleware, async (req, res) => {
+  const { courseId } = req.params;
+  const user = req.body.user;
+
+  if (!mongoose.Types.ObjectId.isValid(courseId))
+    return res.status(400).json({ message: "Invalid course id" });
+
+  //  Find course
+  const course = await Course.findById(courseId);
+  if (!course) return res.status(404).json({ message: "Course not found" });
+
+  try {
+    await User.findByIdAndUpdate(user?._id, {
+      $push: { courses: course?._id },
+    });
+    return res.json({ message: "Course purchased successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Something went wrong" });
+  }
 });
 
-app.get('/purchasedCourses', userMiddleware, (req, res) => {
-    // Implement fetching purchased courses logic
+router.get("/purchasedCourses", userMiddleware, async (req, res) => {
+  // console.log(req.body.user);
+  try {
+    const user = await User.findById(req.body.user._id).populate("courses");
+    res.json(user.courses);
+  } catch (err) {
+    res.status(500).json({ message: "Something went wrong" });
+  }
 });
+
+module.exports = router;

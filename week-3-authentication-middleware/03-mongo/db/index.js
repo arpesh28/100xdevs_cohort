@@ -2,9 +2,7 @@ const mongoose = require("mongoose");
 const zod = require("zod");
 
 // Connect to MongoDB
-mongoose.connect(
-  "mongodb+srv://arpesh:arpesh@cluster0.vafdmo9.mongodb.net/week-3-1"
-);
+mongoose.connect(process.env.MONGO_URI);
 
 const getErrors = (errors) => {
   return errors?.map((err) => ({

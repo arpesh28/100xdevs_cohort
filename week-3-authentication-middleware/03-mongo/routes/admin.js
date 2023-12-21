@@ -47,7 +47,6 @@ router.post("/courses", adminMiddleware, async (req, res) => {
   });
   try {
     const result = await course.save();
-    console.log(result);
     res.json({
       message: "Course created successfully",
       courseId: result?._id,
