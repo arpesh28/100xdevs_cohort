@@ -88,7 +88,6 @@ app.post("/todos", (req, res) => {
 
 //  Update a single todo with :id
 app.put("/todos/:id", (req, res) => {
-  console.log("body:", req.body);
   fs.readFile("todos.json", "utf-8", (err, data) => {
     if (err)
       return res.status(500).send({ message: "Something went wrong", err });
@@ -125,11 +124,5 @@ app.delete("/todos/:id", (req, res) => {
     });
   });
 });
-
-// const PORT = 3000;
-
-// app.listen(PORT, () => {
-//   console.log("listening to port " + PORT);
-// });
 
 module.exports = app;
